@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 def preprocess_dataset(file_name):
-    df = pd.read_csv(file_name)
+    df = pd.read_csv(file_name, on_bad_lines='skip')
     df = df.drop(columns=['Director', 'Cast', 'Wiki Page'])
     df = df.drop_duplicates(subset=['Plot']).reset_index(drop=True)
 
