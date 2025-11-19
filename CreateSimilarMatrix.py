@@ -3,10 +3,10 @@ import numpy as np
 
 df = pd.read_csv("wiki_movie_plots_deduped.csv")
 df = df[df['Genre'] != 'unknown'].reset_index(drop=True)
-df = df.sample(n = 500, random_state=1).reset_index(drop=True)
-print(df['Plot'][136])
-print(" NEXT ")
-print(df['Plot'][453])
+#df = df.sample(n = 500, random_state=1).reset_index(drop=True)
+#print(df['Plot'][136])
+#print(" NEXT ")
+#print(df['Plot'][453])
 
 q = 5
 plots = {}
@@ -33,10 +33,11 @@ b = len(set1.union(set2))
 print(t/b)
 #end testing
 '''
-
+l = len(df['Plot'])
 #needs optimization
 simMat = np.zeros((len(df['Plot']), len(df['Plot'])), dtype = float)
 for idx, x in enumerate(plots.values()):
+    print(idx, "/", l)
     for idy, y in enumerate(plots.values()):
         if idx+idy >= simMat.shape[0]:
             break
@@ -45,7 +46,6 @@ for idx, x in enumerate(plots.values()):
         b = len(x.union(y))
         r = t/b
         simMat[idx][idy+ idx] = r
-#np.save("array.npy", simMat)
 print(simMat)
 
 

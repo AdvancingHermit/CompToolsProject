@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
 from collections import defaultdict
+
 import groupedGenres
 
 df = pd.read_csv("wiki_movie_plots_deduped.csv")
 df = df[df['Genre'] != 'unknown'].reset_index(drop=True)
-df = df.sample(n = 500, random_state=1).reset_index(drop=True)
+#df = df.sample(n = 500, random_state=1).reset_index(drop=True)
 #print(df['Plot'][136])
 #print(" NEXT ")
 #print(df['Plot'][453])
@@ -57,7 +58,7 @@ for i in range(k):
         if val >= threshold:
             genre1 = genre_map[df['Genre'][i]]
             genre2 = genre_map[df['Genre'][i+j]]
-            if genre1 == genre2:
+            if len(genre1.intersection(genre2)) != 0:
                 trueOverAverage += 1
             else:
                 falseOverAverage += 1
