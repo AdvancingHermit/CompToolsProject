@@ -71,14 +71,13 @@ for fold_idx, (inner_train_idx, validation_idx) in enumerate(outer_kf.split(X)):
         y_pred_topics_flat = list(map(lambda x: x[0] if isinstance(x, list) else x, y_pred_topics))
 
 
-        y_pred_genres = list(map(max_dict.get, y_pred_topics_flat))
-        print(y_pred_genres)
+        y_pred_genres = list(map(lambda t: max_dict.get(t, majority_class), y_pred_topics_flat))
 
 
         ### Evaluation
         correct = [y_validation[i, pred] == 1 for i, pred in enumerate(y_pred_genres)]
-        print(correct)
         accuracy_kmeans[fold_idx,k_idx] = np.mean(correct).item()
+        print(accuracy_kmeans[fold_idx,k_idx])
 
     for h_idx, hdbscan_size in enumerate(hdbscan_min_cluster_size):
 
@@ -102,7 +101,10 @@ for fold_idx, (inner_train_idx, validation_idx) in enumerate(outer_kf.split(X)):
         max_dict = {i: col.item() for i, col in enumerate(max_cols)}
 
         y_pred_topics = [get_topics(text, topic_model_hdbscan, max_topics=1)[0] for text in X_validation]
-        y_pred_topics_flat = list(map(lambda x: x[0] if isinstance(x, list) else x, y_pred_topics))
+        y_pred_topics_flat = list(
+            map(lambda x: x[0] if isinstance(x, list) and x[0] is not None else (-1 if x is None else x), y_pred_topics)
+        )
+
 
         y_pred_genres = list(
             map(lambda t: max_dict[t] if t != -1 else max_dict[n_topics - 1], y_pred_topics_flat)
@@ -110,18 +112,37 @@ for fold_idx, (inner_train_idx, validation_idx) in enumerate(outer_kf.split(X)):
 
         correct = [y_validation[i, pred] == 1 for i, pred in enumerate(y_pred_genres)]
         accuracy_hdbscan[fold_idx,h_idx] = np.mean(correct).item()
+        print(accuracy_hdbscan[fold_idx, h_idx])
 
 
 
+# -------- KMeans --------
 mean_accuracy_kmeans = accuracy_kmeans.mean(axis=0)
+best_k_idx = np.argmax(mean_accuracy_kmeans)
+best_k = kmeans_clusters[best_k_idx]
+best_acc = mean_accuracy_kmeans[best_k_idx]
+
 print("Mean accuracy of K-means per number of clusters:")
 for k, acc in zip(kmeans_clusters, mean_accuracy_kmeans):
     print(f"{k:>3}  →  {acc:.4f}")
+print(f"Best K-means: k={best_k} with mean accuracy {best_acc:.4f}\n")
 
+# -------- HDBSCAN --------
 mean_accuracy_hdbscan = accuracy_hdbscan.mean(axis=0)
+best_h_idx = np.argmax(mean_accuracy_hdbscan)
+best_h_size = hdbscan_min_cluster_size[best_h_idx]
+best_h_acc = mean_accuracy_hdbscan[best_h_idx]
+
 print("Mean accuracy of HDBscan per min cluster size:")
-for k, acc in zip(hdbscan_min_cluster_size, mean_accuracy_hdbscan):
-    print(f"{k:>3}  →  {acc:.4f}")
+for h, acc in zip(hdbscan_min_cluster_size, mean_accuracy_hdbscan):
+    print(f"{h:>3}  →  {acc:.4f}")
+print(f"Best HDBSCAN: min_cluster_size={best_h_size} with mean accuracy {best_h_acc:.4f}")
 
+# Save KMeans accuracy table
+np.savetxt("accuracy_kmeans.csv", accuracy_kmeans, delimiter=",",
+           header=",".join(map(str, kmeans_clusters)), comments='')
 
+# Save HDBSCAN accuracy table
+np.savetxt("accuracy_hdbscan.csv", accuracy_hdbscan, delimiter=",",
+           header=",".join(map(str, hdbscan_min_cluster_size)), comments='')
 
