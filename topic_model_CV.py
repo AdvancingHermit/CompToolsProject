@@ -18,7 +18,6 @@ np.random.seed(1234)
 genre_encoder = MultiLabelBinarizer()
 
 df, df_unknown_genre = preprocess_dataset('data/wiki_movie_plots_deduped.csv')
-df = subset_sampler(df, n=5000)
 
 X = df['Processed_Plot'].values
 y = genre_encoder.fit_transform(df['Genre'].values)
@@ -35,12 +34,12 @@ n_genres = len(genre_encoder.classes_)
 
 kmeans_clusters = np.arange(20, 101, 10)
 hdbscan_min_cluster_size = np.arange(50, 301, 25)
-num_folds = 5
+num_folds = 3
 
-f1_scores_kmeans = np.zeros((num_folds, len(kmeans_clusters)))
+#f1_scores_kmeans = np.zeros((num_folds, len(kmeans_clusters)))
 accuracy_kmeans  = np.zeros((num_folds, len(kmeans_clusters)))
 
-f1_scores_hdbscan = np.zeros((num_folds, len(hdbscan_min_cluster_size)))
+#Hf1_scores_hdbscan = np.zeros((num_folds, len(hdbscan_min_cluster_size)))
 accuracy_hdbscan  = np.zeros((num_folds, len(hdbscan_min_cluster_size)))
 
 

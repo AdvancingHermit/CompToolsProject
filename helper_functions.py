@@ -151,5 +151,11 @@ def get_topics(text, topic_model, min_score=0.5, max_topics=3):
     filtered_ids, filtered_scores = zip(*filtered)
     return list(filtered_ids), list(filtered_scores)
 
+def run_fold(fold_idx, train_idx, val_idx):
+    # Your training and evaluation code here
+    # Make sure it returns the accuracy or metrics
+    accuracy = train_and_evaluate(fold_idx, train_idx, val_idx)
+    return fold_idx, accuracy
+
 
 
