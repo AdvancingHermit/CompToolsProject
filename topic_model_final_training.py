@@ -41,6 +41,18 @@ X_train_topics_kmeans, X__train_scores_kmeans = np.array(X_train_topics_kmeans),
 
 majority_class = np.bincount(np.argmax(y_train, axis=1)).argmax()
 
+
+y_pred_genres = [majority_class] * len(y_test)
+correct = [y_test[i, pred] == 1 for i, pred in enumerate(majority_class)]
+accuracy_naive = np.mean(correct).item()
+print("Accuracy Naive Method")
+print(accuracy_naive)
+
+with open('y_pred_genres_naive.txt', 'w') as f:
+    for genre in y_pred_genres:
+        f.write(f"{genre}\n")
+
+
 topic_genre_matrix = np.zeros((kmeans_clusters, n_genres), dtype=int)
 for i,j in zip(X_train_topics_kmeans, y_train): #
     topic_genre_matrix[X_train_topics_kmeans[i] , :] += j
