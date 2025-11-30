@@ -43,7 +43,7 @@ majority_class = np.bincount(np.argmax(y_train, axis=1)).argmax()
 
 
 y_pred_genres = [majority_class] * len(y_test)
-correct = [y_test[i, pred] == 1 for i, pred in enumerate(majority_class)]
+correct = [y_test[i, pred] == 1 for i, pred in enumerate(y_pred_genres)]
 accuracy_naive = np.mean(correct).item()
 print("Accuracy Naive Method")
 print(accuracy_naive)
