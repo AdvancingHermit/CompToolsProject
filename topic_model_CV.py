@@ -36,7 +36,7 @@ n_genres = len(genre_encoder.classes_)
 
 kmeans_clusters = np.arange(20, 101, 10)
 hdbscan_min_cluster_size = np.arange(50, 301, 25)
-num_folds = 2
+num_folds = 3
 
 #f1_scores_kmeans = np.zeros((num_folds, len(kmeans_clusters)))
 accuracy_kmeans  = np.zeros((num_folds, len(kmeans_clusters)))
@@ -138,7 +138,7 @@ for fold_idx, (inner_train_idx, validation_idx) in enumerate(outer_kf.split(X)):
 
         topic_genre_matrix = np.zeros((n_topics, n_genres), dtype=int)
         for i,j in zip(X_inner_train_topics_dbscan, y_inner_train): # the topic corresponds to -1 (trash)
-            topic_genre_matrix[X_inner_train_topics_dbscan[i] , :] += j # can  be down more efficiently
+            topic_genre_matrix[i , :] += j # can  be down more efficiently
 
 
         max_cols = np.argmax(topic_genre_matrix, axis=1)
