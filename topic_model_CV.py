@@ -10,6 +10,8 @@ from hdbscan import HDBSCAN
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import MultiLabelBinarizer
 
+from collections import Counter
+
 nltk.download('stopwords')
 nltk.download('punkt')
 
@@ -34,7 +36,7 @@ n_genres = len(genre_encoder.classes_)
 
 kmeans_clusters = np.arange(20, 101, 10)
 hdbscan_min_cluster_size = np.arange(50, 301, 25)
-num_folds = 3
+num_folds = 2
 
 #f1_scores_kmeans = np.zeros((num_folds, len(kmeans_clusters)))
 accuracy_kmeans  = np.zeros((num_folds, len(kmeans_clusters)))
@@ -42,14 +44,18 @@ accuracy_kmeans  = np.zeros((num_folds, len(kmeans_clusters)))
 #Hf1_scores_hdbscan = np.zeros((num_folds, len(hdbscan_min_cluster_size)))
 accuracy_hdbscan  = np.zeros((num_folds, len(hdbscan_min_cluster_size)))
 
-
 outer_kf = KFold(n_splits=num_folds, shuffle=True, random_state=42)
+
+print("Started")
 
 for fold_idx, (inner_train_idx, validation_idx) in enumerate(outer_kf.split(X)):
     X_inner_train, X_validation = X[inner_train_idx], X[validation_idx]
     y_inner_train, y_validation = y[inner_train_idx], y[validation_idx]
 
     majority_class = np.bincount(np.argmax(y_inner_train, axis=1)).argmax()
+    total_genre_counts = np.sum(y_inner_train, axis=0)
+    genre_probabilities = total_genre_counts / np.sum(total_genre_counts)
+    all_genres = np.arange(len(genre_probabilities))
 
 
     for k_idx, kmeans_k in enumerate(kmeans_clusters):
@@ -60,18 +66,57 @@ for fold_idx, (inner_train_idx, validation_idx) in enumerate(outer_kf.split(X)):
         X_inner_train_topics_kmeans, X_inner_train_scores_kmeans = np.array(X_inner_train_topics_kmeans), np.array(X_inner_train_scores_kmeans)
 
         topic_genre_matrix = np.zeros((kmeans_k, n_genres), dtype=int)
-        for i,j in zip(X_inner_train_topics_kmeans, y_inner_train): #
-            topic_genre_matrix[X_inner_train_topics_kmeans[i] , :] += j
+
+        '''
+        topic_genre_matrix_2 = np.zeros((kmeans_k, n_genres), dtype=int)
+        print("Zip 1")
+        print(X_inner_train_topics_kmeans)
+        print("Zip 2")
+        print(y_inner_train)
+        '''
+
+        '''for i,j in zip(X_inner_train_topics_kmeans, y_inner_train): #
+            topic_genre_matrix_2[X_inner_train_topics_kmeans[i] , :] += j'''
+        for i,j in zip(X_inner_train_topics_kmeans, y_inner_train):
+            topic_genre_matrix[i, :] += j
+
+        print("1", topic_genre_matrix)
+        #print("2", topic_genre_matrix_2)
+
 
         max_cols = np.argmax(topic_genre_matrix, axis=1)
         max_dict = {i: col.item() for i, col in enumerate(max_cols)}
 
+        '''
+        print("Y_VAL")
+        y_validation_flat = np.argmax(y_validation, axis=1)
+        val_counts = Counter(y_validation_flat)
+        print("--- Validation Data Distribution ---")
+        for value, frequency in val_counts.most_common():
+            print(f"Genre ID: {value}, Count: {frequency}")
+        '''
+
         y_pred_topics = [get_topics(text, topic_model_kmeans, max_topics=1)[0] for text in X_validation]
         y_pred_topics_flat = list(map(lambda x: x[0] if isinstance(x, list) else x, y_pred_topics))
 
+        '''
+        y_pred_genres = []
+        print(genre_probabilities)
+        for t in y_pred_topics_flat:
+            if t in max_dict and t != -1:
+                y_pred_genres.append(max_dict[t])
+            else:
+                y_pred_genres.append(np.random.choice(all_genres, p=genre_probabilities))
+        '''
 
         y_pred_genres = list(map(lambda t: max_dict.get(t, majority_class), y_pred_topics_flat))
 
+        # Assuming y_pred_genres is your list
+        counts = Counter(y_pred_genres)
+
+        # Print sorted by frequency
+        for value, frequency in counts.most_common():
+            print(f"Value: {value}, Count: {frequency}")
 
         ### Evaluation
         correct = [y_validation[i, pred] == 1 for i, pred in enumerate(y_pred_genres)]
@@ -100,10 +145,12 @@ for fold_idx, (inner_train_idx, validation_idx) in enumerate(outer_kf.split(X)):
         max_dict = {i: col.item() for i, col in enumerate(max_cols)}
 
         y_pred_topics = [get_topics(text, topic_model_hdbscan, max_topics=1)[0] for text in X_validation]
+
+        print("y_pred_topics", y_pred_topics)
+
         y_pred_topics_flat = list(
             map(lambda x: x[0] if isinstance(x, list) and x[0] is not None else (-1 if x is None else x), y_pred_topics)
         )
-
 
         y_pred_genres = list(
             map(lambda t: max_dict[t] if t != -1 else max_dict[n_topics - 1], y_pred_topics_flat)
@@ -113,7 +160,7 @@ for fold_idx, (inner_train_idx, validation_idx) in enumerate(outer_kf.split(X)):
         accuracy_hdbscan[fold_idx,h_idx] = np.mean(correct).item()
         print(accuracy_hdbscan[fold_idx, h_idx])
 
-
+print("Ended")
 
 # -------- KMeans --------
 mean_accuracy_kmeans = accuracy_kmeans.mean(axis=0)
