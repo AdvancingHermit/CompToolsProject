@@ -40,6 +40,9 @@ kmeans_clusters = np.arange(20, 101, 10)
 hdbscan_min_cluster_size = np.arange(50, 301, 25)
 num_folds = 2
 
+ConfusionMatrixes = []
+ConfusionMatrixesGenres = []
+
 #f1_scores_kmeans = np.zeros((num_folds, len(kmeans_clusters)))
 accuracy_kmeans  = np.zeros((num_folds, len(kmeans_clusters)))
 
@@ -56,7 +59,7 @@ for fold_idx, (inner_train_idx, validation_idx) in enumerate(outer_kf.split(X)):
     for k_idx, kmeans_k in enumerate(kmeans_clusters):
 
         kmeans_model = KMeans(n_clusters=kmeans_k, random_state=42)
-        topic_model_kmeans = BERTopic(hdbscan_model=kmeans_model, min_topic_size=15, top_n_words=15)
+        topic_model_kmeans = BERTopic(hdbscan_model=kmeans_model)
         X_inner_train_topics_kmeans, X_inner_train_scores_kmeans = topic_model_kmeans.fit_transform(X_inner_train)
         X_inner_train_topics_kmeans, X_inner_train_scores_kmeans = np.array(X_inner_train_topics_kmeans), np.array(X_inner_train_scores_kmeans)
 
@@ -95,17 +98,32 @@ for fold_idx, (inner_train_idx, validation_idx) in enumerate(outer_kf.split(X)):
         FN = 0
         TN = 0
 
+        conf_matrix_genre = []
+
+        for i in range(15):
+            matrix = [0]*4
+            conf_matrix_genre.append(matrix)
+
         for i in range(len(y_validation)):
+
             for j in range(len(y_validation[i])):
-                #print("val", y_validation[i][j])
+
                 if y_validation[i][j] == 1 and j in y_pred_genres[i]:
                     TP += 1
+                    conf_matrix_genre[j][0] += 1
                 if y_validation[i][j] == 1 and j not in y_pred_genres[i]:
                     FN += 1
+                    conf_matrix_genre[j][2] += 1
                 if y_validation[i][j] == 0 and j in y_pred_genres[i]:
                     FP += 1
+                    conf_matrix_genre[j][1] += 1
                 if y_validation[i][j] == 0 and j not in y_pred_genres[i]:
                     TN += 1
+                    conf_matrix_genre[j][3] += 1
+
+        ConfusionMatrixesGenres.append(conf_matrix_genre)
+        #print(ConfusionMatrixesGenres)
+        print(conf_matrix_genre)
 
 
         print("FN", FN)
@@ -118,6 +136,8 @@ for fold_idx, (inner_train_idx, validation_idx) in enumerate(outer_kf.split(X)):
         Accuracy = (TP + TN) / (TP + FP + FN + TN)
         Precision = (TP) / (TP + FP)
         Recall = (TP) / (TP + FN)
+
+        ConfusionMatrixes.append([TP, FP, FN, TN])
 
         f1_score = (2*Precision*Recall)/(Precision + Recall)
 
@@ -139,7 +159,19 @@ for k, acc in zip(kmeans_clusters, mean_accuracy_kmeans):
     print(f"{k:>3}  →  {acc:.4f}")
 print(f"Best K-means: k={best_k} with mean accuracy {best_acc:.4f}\n")
 
+print("Confusion matrix:")
+print(ConfusionMatrixes[best_k_idx])
+print("Confusion Matrix Genres")
+print(ConfusionMatrixesGenres[best_k_idx])
+
 # Save KMeans accuracy table
 np.savetxt("accuracy_kmeans.csv", accuracy_kmeans, delimiter=",",
            header=",".join(map(str, kmeans_clusters)), comments='')
 
+with open("best_conf_matrix.txt", "w") as f:
+    for item in ConfusionMatrixes[best_k_idx]:
+        f.write(f"{item}\n")
+
+with open("best_conf_genre_matrix.txt", "w") as f:
+    for item in ConfusionMatrixesGenres[best_k_idx]:
+        f.write(f"{item}\n")
