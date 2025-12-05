@@ -1,0 +1,31 @@
+name: imdb-lstm-legacy
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.8
+  - pip
+  - numpy=1.19
+  - pandas
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - jupyterlab
+  - notebook
+  - ipykernel
+  - nltk
+  - gensim
+  - spacy
+  - tqdm
+  - pip:
+      - torch==1.8.1
+      - torchtext==0.9.1
+      - pyspellchecker
+      - dill
+      - scattertext
+      - termcolor
+      - plotly
+      - wordfreq
+      - contractions
+      - sentencepiece
+
