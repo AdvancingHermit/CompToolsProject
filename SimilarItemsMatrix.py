@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from collections import defaultdict
-
+import itertools
 import groupedGenres
 
 df = pd.read_csv("wiki_movie_plots_deduped.csv")
@@ -48,14 +48,48 @@ for value in all_genres:
 
 genre_map = dict(genre_map)
 
-for k, v in list(genre_map.items())[:20]:
-    print(f"{k} → {v}")
+genre_counts = dict()
+sum = 0
+'''
+for item in list(genre_map.values()):
+    sum += len(item)
+    for g in item:
+        if g in genre_counts:
+            genre_counts[g] = genre_counts[g] + 1
+        else:
+            genre_counts[g] = 1
+'''
+for genre in df['Genre']:
+    item = genre_map[genre]
+    sum += 1
+    for g in item:
+        if g in genre_counts:
+            genre_counts[g] = genre_counts[g] + 1
+        else:
+            genre_counts[g] = 1
+
+
+
+print(sum)
+sum = 0
+for i in genre_counts.values():
+    sum += i
+
+print(sum)
+print(genre_counts)    
+simlen = len(simMat)    
+abesum = 0
+for item in genre_counts.values():
+    abe = item / simlen
+    abe = abe*abe*1.1
+    abesum += abe
+print(abesum)
+
+
 
 print("\nTotal unique genre strings:", len(genre_map))
 
-
-
-
+threshold = 0
 k = simMat.shape[0]
 print(k)
 for i in range(k):
@@ -75,7 +109,6 @@ for i in range(k):
 
 print("True over threshold: ", trueOverThreshold)
 print("False over threshold: ", falseOverThreshold)
-
 
 
 

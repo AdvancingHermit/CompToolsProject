@@ -6,9 +6,6 @@ import hashlib
 df = pd.read_csv("wiki_movie_plots_deduped.csv")
 df = df[df['Genre'] != 'unknown'].reset_index(drop=True)
 #df = df.sample(n = 500, random_state=1).reset_index(drop=True)
-#print(df['Plot'][136])
-#print(" NEXT ")
-#print(df['Plot'][453])
 
 #np.int64(14367), np.int64(20340)
 print(df['Title'][14367], df['Plot'].get(14367),"\nText 2:\n", df['Title'][20340], df['Plot'].get(20340) )
@@ -58,6 +55,7 @@ for idx, x in enumerate(signatures.values()):
         simMat[idx][idy+ idx] = estimate_jaccard_sim(x, y)
 print(simMat)
 np.save("simmat_hashed.npy", simMat)
+
 
 
 '''
