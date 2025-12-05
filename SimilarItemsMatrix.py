@@ -6,14 +6,18 @@ import groupedGenres
 
 df = pd.read_csv("wiki_movie_plots_deduped.csv")
 df = df[df['Genre'] != 'unknown'].reset_index(drop=True)
+# Uncomment next line to run a quicker example using only 500 random entries
 #df = df.sample(n = 500, random_state=1).reset_index(drop=True)
 
+# Load matrix from the file generated from CreateSimilarMatrix.py
 simMat = np.load("simmat_hashed.npy")
+# Make sure the diagonal is not counted since this is the similarity between themselves
 simMat[simMat == 1] = -1
-print(np.unravel_index(np.argmax(simMat), simMat.shape), np.max(simMat))
+#print(np.unravel_index(np.argmax(simMat), simMat.shape), np.max(simMat))
 
+# Computing top 10% threshold of similarities
 threshold = np.quantile(simMat[simMat != -1], 0.90)
-print(threshold)
+#print(threshold)
 trueOverThreshold = 0
 falseOverThreshold = 0
 
@@ -27,6 +31,7 @@ genre_map = defaultdict(set)
 all_genres = df['Genre'].unique().tolist()
 
 
+#Create a map mapping all genres to a list of the primary genres they fit in
 all_vars = vars(groupedGenres)
 genre_map = defaultdict(set)
 known_keys = [k for k, v in all_vars.items() if isinstance(v, list) and not k.startswith('_')]
@@ -35,7 +40,7 @@ for genre, values in all_vars.items():
     if genre in known_keys:
         for value in values:
             genre_map[value].add(genre)
-print(known_keys)
+#print(known_keys)
 for value in all_genres:
     if value in genre_map.keys():
         continue
@@ -43,57 +48,18 @@ for value in all_genres:
     if matches:
         genre_map[value].update(matches)
     else:
-        print(value)
+        #print(value)
         genre_map[value].add('other')
 
 genre_map = dict(genre_map)
 
-genre_counts = dict()
-sum = 0
-'''
-for item in list(genre_map.values()):
-    sum += len(item)
-    for g in item:
-        if g in genre_counts:
-            genre_counts[g] = genre_counts[g] + 1
-        else:
-            genre_counts[g] = 1
-'''
-for genre in df['Genre']:
-    item = genre_map[genre]
-    sum += 1
-    for g in item:
-        if g in genre_counts:
-            genre_counts[g] = genre_counts[g] + 1
-        else:
-            genre_counts[g] = 1
-
-
-
-print(sum)
-sum = 0
-for i in genre_counts.values():
-    sum += i
-
-print(sum)
-print(genre_counts)    
-simlen = len(simMat)    
-abesum = 0
-for item in genre_counts.values():
-    abe = item / simlen
-    abe = abe*abe*1.1
-    abesum += abe
-print(abesum)
-
-
 
 print("\nTotal unique genre strings:", len(genre_map))
 
-threshold = 0
 k = simMat.shape[0]
-print(k)
+#print(k)
 for i in range(k):
-    print(i)
+    #print(i)
     for j in range(k):
         if j+i >= k:
             break
@@ -101,6 +67,7 @@ for i in range(k):
         if val >= threshold:
             genre1 = genre_map[df['Genre'][i]]
             genre2 = genre_map[df['Genre'][i+j]]
+            # counting one occurrence of same genre, if they share at least 1 primary genre
             if len(genre1.intersection(genre2)) != 0:
                 trueOverThreshold += 1
             else:
@@ -109,6 +76,7 @@ for i in range(k):
 
 print("True over threshold: ", trueOverThreshold)
 print("False over threshold: ", falseOverThreshold)
+print("Same genre probability = ", trueOverThreshold / (trueOverThreshold + falseOverThreshold))
 
 
 

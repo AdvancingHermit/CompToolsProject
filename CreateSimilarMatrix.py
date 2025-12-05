@@ -5,10 +5,9 @@ import hashlib
 # Load data
 df = pd.read_csv("wiki_movie_plots_deduped.csv")
 df = df[df['Genre'] != 'unknown'].reset_index(drop=True)
+# Uncomment next line to run a quicker example using only 500 random entries
 #df = df.sample(n = 500, random_state=1).reset_index(drop=True)
 
-#np.int64(14367), np.int64(20340)
-print(df['Title'][14367], df['Plot'].get(14367),"\nText 2:\n", df['Title'][20340], df['Plot'].get(20340) )
 
 #Get and compress shingles from all movie plots
 q = 5 # Shingle size
@@ -22,7 +21,7 @@ for index,row in df.iterrows():
     shingles_of_plots[index] = shingles
 
 
-
+# creating 100 random hash functions
 np.random.seed(11)
 max_rand_val = len(shingles_of_plots) -1
 num_hashes = 100
@@ -44,22 +43,25 @@ def estimate_jaccard_sim(a, b):
             counter += 1
     return counter / num_hashes
 
-l = len(df['Plot'])
+#l = len(df['Plot'])
+
+#Create the matrix of estimated Jaccard values from the signatures
 simMat = np.zeros((len(df['Plot']), len(df['Plot'])), dtype = float)
 for idx, x in enumerate(signatures.values()):
-    print(idx, "/", l)
+   # print(idx, "/", l)
     for idy, y in enumerate(signatures.values()):
         if idx+idy >= simMat.shape[0]:
             break
         y = signatures[idy + idx]
         simMat[idx][idy+ idx] = estimate_jaccard_sim(x, y)
 print(simMat)
+# Saves the final matrix to a file used in SimilarItemsMatrix.py
 np.save("simmat_hashed.npy", simMat)
 
 
 
 '''
-# Exact Jaccard
+# Exact Jaccard baseline implementation
 
 l = len(df['Plot'])
 #needs optimization
